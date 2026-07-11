@@ -1,8 +1,9 @@
-import random 
+import random
+from turtle import update 
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
-from schemas.books import Book, Genre
+from schemas.books import Book, Genre, PartialUpdateBook
 from db import db
 router = APIRouter(
     prefix="/books",
@@ -47,9 +48,9 @@ async def get_all_books(genre: Genre | None = None):
 
 @router.get("/{book_id}")
 async def get_book(book_id: int):
+
     book = db.books.get(book_id)
     
-
     if not book:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -59,6 +60,25 @@ async def get_book(book_id: int):
     return book
 
 
-# @router.put("/{id}")
+@router.patch("/{book_id}")
+async def update_book(book_update: PartialUpdateBook, book_id: int):
+
+    book = db.books.get(book_id)
+    
+    if not book:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "This book does not exist."}
+        )
+    
+    book_dict = book_update.dict(exclude_unset=True)
+    updated_book = book.copy(update=book_dict)
+
+    db.books[book_id] = updated_book
+
+    return updated_book
+
+
+
 # @router.patch("/{id}")
 # @router.delete("/{id}")

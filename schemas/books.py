@@ -28,3 +28,10 @@ class Book(BaseModel):
         if isinstance(v, str):
             return v.upper()
         return ValueError("ISBN should be of string format")
+    
+class PartialUpdateBook(Book):
+    title: str | None = None
+    author: str = Field(None, max_length=32)
+    genre: list[Genre] | None = []
+    page_count: int = Field(None, ge=30)
+    ISBN: str = Field(None, min_length=16, max_length=32)
