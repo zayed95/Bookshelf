@@ -1,10 +1,10 @@
 import random
-from turtle import update 
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
 from schemas.books import Book, Genre, PartialUpdateBook
 from db import db
+
 router = APIRouter(
     prefix="/books",
     tags=["books"]
@@ -60,8 +60,22 @@ async def get_book(book_id: int):
     return book
 
 
+@router.put("/{book_id}")
+async def update_book(book_update: Book, book_id: int):
+
+    try:
+
+        db.books[book_id] = book_update
+        return {"message": "Book has been updated"}
+    
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "This book does not exist"}
+        )
+    
 @router.patch("/{book_id}")
-async def update_book(book_update: PartialUpdateBook, book_id: int):
+async def partial_update_book(book_update: PartialUpdateBook, book_id: int):
 
     book = db.books.get(book_id)
     
@@ -79,6 +93,17 @@ async def update_book(book_update: PartialUpdateBook, book_id: int):
     return updated_book
 
 
-
-# @router.patch("/{id}")
-# @router.delete("/{id}")
+@router.delete("/{book_id}")
+async def delete_book(book_id: int):
+    try: 
+        db.books.pop(book_id, None)
+        return JSONResponse(
+           # status_code=status.HTTP_204_NO_CONTENT,
+            content={"message": "book deleted successflly"}
+        )
+    
+    except:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "This book does not exist."}
+        )
