@@ -1,5 +1,6 @@
+from http.client import HTTPException
 import random
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
 from fastapi.responses import JSONResponse
 
 from schemas.books import Book, Genre, PartialUpdateBook
@@ -44,18 +45,18 @@ async def get_all_books(genre: Genre | None = None):
         )
     
     return books
-    
 
-@router.get("/{book_id}")
-async def get_book(book_id: int):
-
-    book = db.books.get(book_id)
-    
-    if not book:
+async def get_book_or_404(book_id: int) -> Book:
+    try:
+        return db.books[book_id]
+    except:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": "This book does not exist."}
-        )
+            content={"message": "This book doesn't exist"}
+        )    
+
+@router.get("/{book_id}")
+async def get_book(book: Book = Depends(get_book_or_404)) -> Book:
     
     return book
 
@@ -63,28 +64,15 @@ async def get_book(book_id: int):
 @router.put("/{book_id}")
 async def update_book(book_update: Book, book_id: int):
 
-    try:
 
-        db.books[book_id] = book_update
-        return {"message": "Book has been updated"}
-    
-    except:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": "This book does not exist"}
-        )
+    db.books[book_id] = book_update
+    return {"message": "Book has been updated"}
+
     
 @router.patch("/{book_id}")
-async def partial_update_book(book_update: PartialUpdateBook, book_id: int):
+async def partial_update_book(book_update: PartialUpdateBook,
+                            book_id: int, book: Book = Depends(get_book_or_404)):
 
-    book = db.books.get(book_id)
-    
-    if not book:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": "This book does not exist."}
-        )
-    
     book_dict = book_update.dict(exclude_unset=True)
     updated_book = book.copy(update=book_dict)
 
@@ -94,16 +82,10 @@ async def partial_update_book(book_update: PartialUpdateBook, book_id: int):
 
 
 @router.delete("/{book_id}")
-async def delete_book(book_id: int):
-    try: 
-        db.books.pop(book_id, None)
-        return JSONResponse(
-           # status_code=status.HTTP_204_NO_CONTENT,
-            content={"message": "book deleted successflly"}
-        )
+async def delete_book(book_id: int, book: Book = Depends(get_book_or_404)):
     
-    except:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": "This book does not exist."}
-        )
+    db.books.popitem((book_id, book))
+    
+    return JSONResponse(
+        content={"message": "book deleted successflly"}
+    )
