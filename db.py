@@ -1,8 +1,15 @@
-from schemas.books import Book
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
 
-class DummyDatabase:
+DATABASE_URL = "sqlite+aiosqlite:///test.db"
 
-    books: dict[int, Book] = {}
+engine = create_async_engine(DATABASE_URL, echo=True)
 
-db = DummyDatabase()
+async def get_session():
+    async with AsyncSession(engine) as session:
+        yield session
 
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)

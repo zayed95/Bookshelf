@@ -1,3 +1,6 @@
 pydantic
 fastapi
 email-validator
+sqlalchemy[asyncio,mypy]
+aiosqlite
+sqlmodel

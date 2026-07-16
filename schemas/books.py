@@ -1,37 +1,40 @@
-from pydantic import BaseModel, Field, field_validator
+#from pydantic import BaseModel, Field, ConfigDict
+from email.policy import default
+
+from sqlmodel import Field, Session, SQLModel
 from enum import Enum
+from typing import Optional
 
 class Genre(str, Enum):
 
-    HORROR = "horror"
     MYSTERY = "mystery"
     ROMANCE = "romance"
     NONFICTION = "nonfiction"
     HISTORY = "history"
-    SCIFI = "science-fiction"
     FANTASY = "fantasy"
-    FICTION = "fiction"
     CLASSIC = "classic"
     POLITICS = "politics"
-    ROMCOM = "rom-com"
 
-class Book(BaseModel):
+class BookBase(SQLModel):
 
     title: str
     author: str = Field(..., max_length=32)
-    genre: list[Genre]
+    genre: Genre
     page_count: int = Field(..., ge=30)
-    ISBN: str = Field(None, min_length=16, max_length=32)
 
-    @field_validator("ISBN")
-    def verify_isbn(cls, v):
-        if isinstance(v, str):
-            return v.upper()
-        return ValueError("ISBN should be of string format")
-    
-class PartialUpdateBook(Book):
-    title: str | None = None
-    author: str = Field(None, max_length=32)
-    genre: list[Genre] | None = []
-    page_count: int = Field(None, ge=30)
-    ISBN: str = Field(None, min_length=16, max_length=32)
+class Book(BookBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True) 
+
+class PartialUpdateBook(SQLModel):
+
+    title: Optional[str] = None
+    author: Optional[str] = None
+    genre: Optional[Genre] = None
+    page_count: Optional[int] = None
+
+
+class BookCreate(BookBase):
+    pass
+
+class BookRead(BookBase):
+    id: int
