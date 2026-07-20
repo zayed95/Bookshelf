@@ -34,13 +34,17 @@ async def create_book(book_create: BookCreate,
 
 
 @router.get("/", response_model=list[BookRead])
-async def get_all_books(genre: Optional[Genre] = None, 
+async def get_all_books(genre: Optional[Genre] = None,
+                        author_id: Optional[int] = None, 
                         session: AsyncSession = Depends(get_session)) -> list[BookRead]:
     
     books = await session.execute(select(Book))
 
     if genre:
         books = await session.execute(select(Book).where(Book.genre == genre))
+
+    if author_id:
+        books = await session.execute(select(Book).where(Book.author_id == author_id))
     
     books = books.scalars().all()
 
