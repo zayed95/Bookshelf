@@ -1,9 +1,9 @@
 from sqlmodel import select
 from fastapi import APIRouter, status, Depends, HTTPException
-from schemas.books import Author, AuthorRead, AuthorCreate
-from db import get_session
+from models.models import Author
+from schemas.authors import AuthorRead, AuthorCreate
+from db.db import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.responses import JSONResponse
 
 router = APIRouter(
     prefix="/authors",
@@ -14,7 +14,7 @@ router = APIRouter(
 async def create_author(author_create: AuthorCreate,
                     session: AsyncSession = Depends(get_session)) -> Author:
 
-    db_author = Author.model_validate(author_create)
+    db_author = Author(**author_create.model_dump())
     session.add(db_author)
     await session.commit()
     await session.refresh(db_author)

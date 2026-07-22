@@ -2,8 +2,9 @@ from sqlmodel import select
 from fastapi import APIRouter, status, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas.books import Book, Genre, PartialUpdateBook, BookCreate, BookRead
-from db import get_session
+from models.models import Book, Genre
+from schemas.books import PartialUpdateBook, BookCreate, BookRead
+from db.db import get_session
 from typing import Optional
 
 router = APIRouter(
@@ -14,7 +15,7 @@ router = APIRouter(
 async def get_book_or_404(book_id: int, 
                           session: AsyncSession = Depends(get_session)) -> Book:
     book = await session.get(Book, book_id)
-    #book = result.scalar_one_or_none()
+    
     if not book:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail="Book not found")
@@ -25,7 +26,7 @@ async def get_book_or_404(book_id: int,
 async def create_book(book_create: BookCreate,
                     session: AsyncSession = Depends(get_session)) -> Book:
 
-    db_book = Book.model_validate(book_create)
+    db_book = Book(**book_create.model_dump())
     session.add(db_book)
     await session.commit()
     await session.refresh(db_book)
@@ -34,8 +35,7 @@ async def create_book(book_create: BookCreate,
 
 
 @router.get("/", response_model=list[BookRead])
-async def get_all_books(genre: Optional[Genre] = None,
-                        author_id: Optional[int] = None, 
+async def get_all_books(genre: Optional[Genre] = None, author_id: Optional[int] = None, 
                         session: AsyncSession = Depends(get_session)) -> list[BookRead]:
     
     books = await session.execute(select(Book))
@@ -59,9 +59,7 @@ async def get_all_books(genre: Optional[Genre] = None,
  
 
 @router.get("/{book_id}", response_model=BookRead)
-async def get_book(book: Book = Depends(get_book_or_404),
-                    session: AsyncSession = Depends(get_session)) -> Book:
-    
+async def get_book(book: Book = Depends(get_book_or_404)) -> Book:
     return book
 
 

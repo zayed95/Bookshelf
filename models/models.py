@@ -1,19 +1,41 @@
-import sqlalchemy as sa
-from sqlalchemy import  Integer, String, Column
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy import Column, Integer, String, Enum as SQLEnum, ForeignKey
+from sqlalchemy.orm import relationship, declarative_base
+from enum import Enum
 
-# Base = declarative_base()
+Base = declarative_base()
 
-# class Book(Base):
-#     __tablename__ = "books"
+class Genre(str, Enum):
+    MYSTERY = "mystery"
+    ROMANCE = "romance"
+    NONFICTION = "nonfiction"
+    HISTORY = "history"
+    FANTASY = "fantasy"
+    CLASSIC = "classic"
+    POLITICS = "politics"
 
-#     #id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-#     id = Column('id', Integer, primary_key=True, autoincrement=True)
-#     #title: Mapped[str] = mapped_column(String(255), nullable=False)
-#     title = Column('title', String(255), nullable=False)
-#     #genre: Mapped[str] = mapped_column(String(255), nullable=False)
-#     genre = Column('genre', String(255), nullable=False)
-#     #page_count: Mapped[int] = mapped_column(Integer, nullable=False)
-#     page_count = Column('page_count', Integer)
+class Author(Base):
+    __tablename__ = "author"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(32), nullable=False)
+    email = Column(String, nullable=False)
+    
+    books = relationship("Book", back_populates="author")
 
-#     metadata_ = Column('metadata', sa.JSON)
+class Book(Base):
+    __tablename__ = "book"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    genre = Column(SQLEnum(Genre), nullable=False)
+    page_count = Column(Integer, nullable=False)
+    author_id = Column(Integer, ForeignKey("author.id"), nullable=True)
+    
+    author = relationship("Author", back_populates="books")
+
+class User(Base):
+    __tablename__ = "user"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)

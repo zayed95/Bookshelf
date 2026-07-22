@@ -4,3 +4,5 @@ email-validator
 sqlalchemy[asyncio,mypy]
 aiosqlite
 sqlmodel
+passlib
+argon2_cffi
